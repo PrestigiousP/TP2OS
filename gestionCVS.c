@@ -11,6 +11,9 @@
 //#
 //#######################################
 #include "gestionListeChaineeCVS.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+
 
 //Pointeur de tête de liste
 extern struct noeud* head;
@@ -187,139 +190,143 @@ void executeFile(const char* sourcefname){
 //#
 //# fonction utilisée par les threads de transactions
 //#
-void readTrans(char* nomFichier){
-	FILE *f;
-	char buffer[100];
-	pthread_t tid[1000];
-	int i, nbThread = 0;
-	char *tok, *sp;
+
+//nomFichier = filedes du fifo de transactions
+void readTrans(int nomFichier){
+
+            //	FILE *f;
+        //	char buffer[100];
+        pthread_t tid[1000];
+        int i, nbThread = 0;
+        char *tok, *sp;
+        struct Info_FIFO_Transactions data;
+        int client_fifo_fd;
+        int read_res;
+        char client_fifo[100];
+        char str[400];
 
 
-    //--------------------------------------------------------------------------------------------------------------------
-    //Lecture (tentative) d'une ligne de texte
+        do {
+        read_res = read(nomFichier, &data, sizeof(data));
+        if (read_res > 0) {
+
+            //printf("valeur de %s", data.transaction);
+            //Extraction du type de transaction
+            tok = strtok_r(data.transaction, "  ", &sp);
+
+            //printf(" \n tok = %s ", tok);
+
+            //Branchement selon le type de transaction
+            switch(tok[0]){
+                case 'A':
+                case 'a':{
+                    //Extraction des paramètres
+                    int noligne = atoi(strtok_r(NULL, " ", &sp));
+                    char *tligne = strtok_r(NULL, "\n", &sp);
+
+                    struct infoADD *ptr = (struct infoADD*) malloc(sizeof(struct infoADD));
+                    ptr->noligne = noligne;
+                    strcpy(ptr->tligne,(const char *)tligne);
+
+                    //Appel de la fonction associée
+                    //printf("\nDANS READTRANS nl = %d tl = %s ", noligne, tligne);
+                    pthread_create(&tid[nbThread++], NULL, (void *)addItem, ptr);
+                    break;
+                }
+                case 'E':
+                case 'e':{
+                    //Extraction du paramètre
+                    int noligne = atoi(strtok_r(NULL, " ", &sp));
+
+                    struct infoREMOVE *ptr = (struct infoREMOVE*) malloc(sizeof(struct infoREMOVE));
+                    ptr->noligne = noligne;
+
+                    //Appel de la fonction associee
+                    pthread_create(&tid[nbThread++], NULL, (void *)removeItem, ptr);
+                    break;
+                }
+                case 'M':
+                case 'm':{
+                    //Extraction des paramètres
+                    int noligne = atoi(strtok_r(NULL, " ", &sp));
+                    char *tligne = strtok_r(NULL, "\n", &sp);
+
+                    struct infoMODIFY *ptr = (struct infoMODIFY*) malloc(sizeof(struct infoMODIFY));
+                    ptr->noligne = noligne;
+                    strcpy(ptr->tligne,(const char *)tligne);
+
+                    //Appel de la fonction associee
+                    pthread_create(&tid[nbThread++], NULL, (void *)modifyItem, ptr);
+                    break;
+                }
+                case 'L':
+                case 'l':{
+                    //Extraction des paramètres
+                    int nstart = atoi(strtok_r(NULL, "-", &sp));
+                    int nend = atoi(strtok_r(NULL, " ", &sp));
+
+                    struct infoLIST *ptr = (struct infoLIST*) malloc(sizeof(struct infoLIST));
+                    ptr->start = nstart;
+                    ptr->end = nend;
+                    //Appel de la fonction associee
+                    str = pthread_create(&tid[nbThread++], NULL, (char *)listItems, ptr);
+                    break;
+                }
+                case 'S':
+                case 's':{
+                    //Appel de la fonction associée
+                    char *nomfich = strtok_r(NULL, " ", &sp);
+
+                    struct infoSAVE *ptr = (struct infoSAVE*) malloc(sizeof(struct infoSAVE));
+                    strcpy(ptr->nomFichier,(const char *)nomfich);
+
+                    //Appel de la fonction associee
+                    pthread_create(&tid[nbThread++], NULL, (void *)saveItems, ptr);
+                    break;
+                }
+                case 'O':
+                case 'o':{
+                    //Appel de la fonction associée
+                    char *nomfich = strtok_r(NULL, " ", &sp);
+
+                    struct infoLOAD *ptr = (struct infoLOAD*) malloc(sizeof(struct infoLOAD));
+                    strcpy(ptr->nomFichier,(const char *)nomfich);
+
+                    //Appel de la fonction associee
+                    pthread_create(&tid[nbThread++], NULL, (void *)loadFich, ptr);
+                    break;
+                }
+                case 'X':
+                case 'x':{
+                    //Appel de la fonction associée
+                    char *nomfich = strtok_r(NULL, " ", &sp);
+
+                    struct infoEXE *ptr = (struct infoEXE*) malloc(sizeof(struct infoEXE));
+                    strcpy(ptr->nomFichier,(const char *)nomfich);
+
+                    //Appel de la fonction associee
+                    pthread_create(&tid[nbThread++], NULL, (void *)executeFile, ptr);
+                    break;
+                }
+            }
+
+            sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
+
+           client_fifo_fd = open(client_fifo, O_WRONLY);
+           if (client_fifo_fd != -1) {
+
+                write(client_fifo_fd, str, sizeof(str));				//Va juste falloir y écrire ce que ça affiche d'habitude
+               // close(client_fifo_fd);
+           }
+
+        }
+    } while (read_res > 0);
 
 
 
-	//Ouverture du fichier en mode "r" (equiv. "rt") : [r]ead [t]ext
-	f = fopen(nomFichier, "rt");
-	if (f==NULL)
-		error(2, "readTrans: Erreur lors de l'ouverture du fichier.");
 
-	//Lecture (tentative) d'une ligne de texte
-	fgets(buffer, 100, f);
-
-	//Pour chacune des lignes lues
-	while(!feof(f)){
-	  
-		sleep(1);
-
-		//Extraction du type de transaction
-		tok = strtok_r(buffer, "  ", &sp);
-		
-		//printf(" \n tok = %s ", tok);
-
-		//Branchement selon le type de transaction
-		switch(tok[0]){
-			case 'A':
-			case 'a':{
-				//Extraction des paramètres
-				int noligne = atoi(strtok_r(NULL, " ", &sp));
-				char *tligne = strtok_r(NULL, "\n", &sp);
-				
-				struct infoADD *ptr = (struct infoADD*) malloc(sizeof(struct infoADD));
-				ptr->noligne = noligne;
-				strcpy(ptr->tligne,(const char *)tligne);
-				
-				//Appel de la fonction associée
-				//printf("\nDANS READTRANS nl = %d tl = %s ", noligne, tligne);
-				pthread_create(&tid[nbThread++], NULL, (void *)addItem, ptr);
-				break;
-				}
-			case 'E':
-			case 'e':{
-				//Extraction du paramètre
-				int noligne = atoi(strtok_r(NULL, " ", &sp));
-				
-				struct infoREMOVE *ptr = (struct infoREMOVE*) malloc(sizeof(struct infoREMOVE));
-				ptr->noligne = noligne;
-				
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)removeItem, ptr);
-				break;
-				}
-			case 'M':
-			case 'm':{
-				//Extraction des paramètres
-				int noligne = atoi(strtok_r(NULL, " ", &sp));
-				char *tligne = strtok_r(NULL, "\n", &sp);
-				
-				struct infoMODIFY *ptr = (struct infoMODIFY*) malloc(sizeof(struct infoMODIFY));
-				ptr->noligne = noligne;
-				strcpy(ptr->tligne,(const char *)tligne);
-				
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)modifyItem, ptr);
-				break;
-				}
-			case 'L':
-			case 'l':{
-				//Extraction des paramètres
-				int nstart = atoi(strtok_r(NULL, "-", &sp));
-				int nend = atoi(strtok_r(NULL, " ", &sp));
-				
-				struct infoLIST *ptr = (struct infoLIST*) malloc(sizeof(struct infoLIST));
-				ptr->start = nstart;
-				ptr->end = nend;
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)listItems, ptr);
-				break;
-				}
-			case 'S':
-			case 's':{
-				//Appel de la fonction associée
-				char *nomfich = strtok_r(NULL, " ", &sp);
-				
-				struct infoSAVE *ptr = (struct infoSAVE*) malloc(sizeof(struct infoSAVE));
-				strcpy(ptr->nomFichier,(const char *)nomfich);
-
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)saveItems, ptr);
-				break;
-				}
-			case 'O':
-			case 'o':{
-				//Appel de la fonction associée
-				char *nomfich = strtok_r(NULL, " ", &sp);
-				
-				struct infoLOAD *ptr = (struct infoLOAD*) malloc(sizeof(struct infoLOAD));
-				strcpy(ptr->nomFichier,(const char *)nomfich);
-
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)loadFich, ptr);
-				break;
-				}
-			case 'X':
-			case 'x':{
-				//Appel de la fonction associée
-				char *nomfich = strtok_r(NULL, " ", &sp);
-				
-				struct infoEXE *ptr = (struct infoEXE*) malloc(sizeof(struct infoEXE));
-				strcpy(ptr->nomFichier,(const char *)nomfich);
-
-				//Appel de la fonction associee
-				pthread_create(&tid[nbThread++], NULL, (void *)executeFile, ptr);
-				break;
-				}
-		}
-
-		//Lecture (tentative) de la prochaine ligne de texte
-		fgets(buffer, 100, f);
-	}
-	
 	for(i=0; i<nbThread;i++)
 	  pthread_join(tid[i], NULL);
-	//Fermeture du fichier
-	fclose(f);
 }
 
 

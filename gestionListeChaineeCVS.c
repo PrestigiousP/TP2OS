@@ -446,9 +446,10 @@ void modifyItem(struct infoMODIFY* param){
 //#
 //# Affiche les items dont le numéro séquentiel est compris dans une plage
 //#
-void listItems(struct infoLIST* param){ 
+char* listItems(struct infoLIST* param){
 
 	int start, end;
+	char str[400] = "";
 	
 	start = param->start;
 	end = param->end;
@@ -464,8 +465,8 @@ void listItems(struct infoLIST* param){
 	sem_wait(&semConsole);
 	
 	//Affichage des entêtes de colonnes
-	printf("noligne  texte                                          \n");
-	printf("======= ================================================\n");
+	str += "noligne  texte                                          \n";
+	str += "======= ================================================\n";
 	
 	if(head != NULL){ // si liste non vide
 	    sem_wait(&(head->sem));
@@ -490,9 +491,9 @@ void listItems(struct infoLIST* param){
 
 		//L'item a un numéro séquentiel dans l'interval défini
 		if ((ptr->ligne.noligne>=start)&&(ptr->ligne.noligne<=end)){
-			printf("%d \t %s\n",
+			str += "%d \t %s\n",
 				ptr->ligne.noligne,
-				ptr->ligne.ptrligne);
+				ptr->ligne.ptrligne;
 			}
 		if (ptr->ligne.noligne>end){
 			//L'ensemble des items potentiels sont maintenant passés
@@ -517,11 +518,13 @@ void listItems(struct infoLIST* param){
 	}
 	
 	//Affichage des pieds de colonnes
-	printf("======= ================================================\n\n");
+	str +="======= ================================================\n\n";
 	
 	sem_post(&semConsole);
 	sem_wait(&semNBThreadAMLSO);
 	    nbThreadAMLSO--;
 	sem_post(&semNBThreadAMLSO);
+
+	return str;
 }
 

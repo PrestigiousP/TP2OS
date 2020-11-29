@@ -75,32 +75,9 @@ int main(int argc, char* argv[]){
 
     //S'apprête à ouvrir le fifo du client en écriture
     client_fifo_fd = open(client_fifo, O_WRONLY);
-//    if (client_fifo_fd != -1) {
-//        write(client_fifo_fd, &data, sizeof(data));				//Va juste falloir y écrire ce que ça affiche d'habitude
-//       // close(client_fifo_fd);
-//    }
-
-    do {
-        read_res = read(server_fifo_fd, &data, sizeof(data));
-        if (read_res > 0) {
-
-            printf("valeur de %s", data.transaction);
-
-            sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
-
-           client_fifo_fd = open(client_fifo, O_WRONLY);
-           if (client_fifo_fd != -1) {
 
 
-               readTrans(FIFO_TRANSACTIONS);
-
-
-                write(client_fifo_fd, &data, sizeof(data));				//Va juste falloir y écrire ce que ça affiche d'habitude
-               // close(client_fifo_fd);
-           }
-
-        }
-    } while (read_res > 0);
+    readTrans(server_fifo_fd);
 
     
 	//Arrêt de l'utilisation du fifo_transactions

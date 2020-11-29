@@ -65,10 +65,9 @@ void addItemNONCONCURRENT(const int nl, const char* tl);
 void addItem(struct infoADD* param);
 void removeItem(struct infoREMOVE* param);
 void modifyItem(struct infoMODIFY* param);
-void listItems(struct infoLIST* param);
+char* listItems(struct infoLIST* param);
 void saveItems(struct infoSAVE* param);
 void executeFile(const char* sourcefname);
 
 void loadFich(const char* sourcefname);
-void readTrans(char* nomFichier);
-void clientTransactions();
+void readTrans(int nomFichier);
