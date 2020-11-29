@@ -1,0 +1,5 @@
+echo compiling...
+cd /home/meunier/Exemples/GestionListeChainee_CVS/exempleCVS
+gcc -o fichCVSEXE fichCVS.c
+./fichCVSEXE
+echo done

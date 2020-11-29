@@ -1,0 +1,5 @@
+A 1 #include <stdio.h>
+A 2 int main(){
+A 3 printf("\n Mon Premier Programme CVS \n");
+A 4 exit(0);}
+L 1-4

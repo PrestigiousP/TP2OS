@@ -1,0 +1,12 @@
+A 1 #include <stdio.h>
+L 1-4
+L 1-4
+A 2 int main(){
+L 1-4
+A 3 printf("\n Mon Premier Programme CVS \n");
+A 4 exit(0);}
+L 1-4
+M 4 return 0;}
+L 1-4
+M 3 printf("\n Mon Premier programme CVS non pas le Dernier \n");
+L 1-4

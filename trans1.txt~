@@ -1,0 +1,17 @@
+A 1 #include <stdio.h>
+A 2 int main(){
+A 3 printf("\n Mon Premier Programme CVS");
+A 4 exit(0);}
+L 1-4
+E 4
+L 1-4
+A 4 return 0;}
+L 1-4
+M 3 printf("\n Mon Premier Programme CVS et non le dernier\n");
+L 1-4
+E 1
+A 1 #include <stdio.h>
+L 1-4
+S fichCVS2.c
+X fichCVS2.c
+
