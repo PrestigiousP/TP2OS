@@ -13,6 +13,7 @@ int main(){
     struct Info_FIFO_Transactions data;
 	char client_fifo[256];
 	int read_res;
+	char str[400];
 	
 	WINDOW *transmission;
     WINDOW *reception;
@@ -66,20 +67,30 @@ int main(){
 
         sleep(2);
 
+        mvwprintw(transmission, 3, 2, "un test");
+        wrefresh(transmission);
+
+        char c = data.transaction[0];
+        char l = 76;//"L"
+
+        mvwprintw(transmission, 3, 2, "on a passé ici");
+        wrefresh(transmission);
         read_res = read(client_fifo_fd, &data, sizeof(data));
         if (read_res > 0) {
-
-            mvwprintw(reception, 1, 10, "%s", data.transaction);
+            mvwprintw(reception, 1, 2, "%s", data.transaction);
             wrefresh(reception);
         }
+
+
+        //Refresh des écrans (Tant qu'il n'y a pas de refresh, rien ne s'affiche)
+        wrefresh(reception);
+        wrefresh(transmission);
     } while (read_res > 0);
 	
 	//--------------------------------------------------
     
 	
-	//Refresh des écrans (Tant qu'il n'y a pas de refresh, rien ne s'affiche)
-	wrefresh(reception);
-    wrefresh(transmission);
+
     sleep(1);
     refresh();
 

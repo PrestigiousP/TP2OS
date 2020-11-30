@@ -205,9 +205,13 @@ void readTrans(int nomFichier){
         char client_fifo[100];
         char str[400];
 
+        sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
+
+        client_fifo_fd = open(client_fifo, O_WRONLY);
 
         do {
-        read_res = read(nomFichier, &data, sizeof(data));
+
+            read_res = read(nomFichier, &data, sizeof(data));
         if (read_res > 0) {
 
             //printf("valeur de %s", data.transaction);
@@ -231,6 +235,7 @@ void readTrans(int nomFichier){
                     //Appel de la fonction associée
                     //printf("\nDANS READTRANS nl = %d tl = %s ", noligne, tligne);
                     pthread_create(&tid[nbThread++], NULL, (void *)addItem, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'E':
@@ -243,6 +248,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)removeItem, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'M':
@@ -257,6 +263,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)modifyItem, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'L':
@@ -266,10 +273,11 @@ void readTrans(int nomFichier){
                     int nend = atoi(strtok_r(NULL, " ", &sp));
 
                     struct infoLIST *ptr = (struct infoLIST*) malloc(sizeof(struct infoLIST));
+                    ptr->data = data;
                     ptr->start = nstart;
                     ptr->end = nend;
                     //Appel de la fonction associee
-                    str = pthread_create(&tid[nbThread++], NULL, (char *)listItems, ptr);
+                    pthread_create(&tid[nbThread++], NULL, (void *)listItems, ptr);
                     break;
                 }
                 case 'S':
@@ -282,6 +290,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)saveItems, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'O':
@@ -294,6 +303,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)loadFich, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'X':
@@ -306,19 +316,10 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)executeFile, ptr);
+                    write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
             }
-
-            sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
-
-           client_fifo_fd = open(client_fifo, O_WRONLY);
-           if (client_fifo_fd != -1) {
-
-                write(client_fifo_fd, str, sizeof(str));				//Va juste falloir y écrire ce que ça affiche d'habitude
-               // close(client_fifo_fd);
-           }
-
         }
     } while (read_res > 0);
 

@@ -12,6 +12,8 @@
 //#######################################
 
 #include "gestionListeChaineeCVS.h"
+#include <sys/stat.h>
+#include <fcntl.h>
 
 //Pointeur de tête de liste
 extern struct noeud* head;
@@ -278,6 +280,7 @@ void  addItem(struct infoADD* param ){
 	sem_wait(&semNBThreadAMLSO);
 	    nbThreadAMLSO--;
 	sem_post(&semNBThreadAMLSO);
+    printf("%s", "fin de additemL");
 
 }
 
@@ -446,85 +449,105 @@ void modifyItem(struct infoMODIFY* param){
 //#
 //# Affiche les items dont le numéro séquentiel est compris dans une plage
 //#
-char* listItems(struct infoLIST* param){
+void listItems(struct infoLIST* param){
 
-	int start, end;
-	char str[400] = "";
-	
-	start = param->start;
-	end = param->end;
-	free(param);
-	
-	sem_wait(&semNBThreadAMLSO);
-	    nbThreadAMLSO++;
-	sem_post(&semNBThreadAMLSO);
-	
-	sem_wait(&semH);
-	sem_wait(&semQ);
-	
-	sem_wait(&semConsole);
-	
-	//Affichage des entêtes de colonnes
-	str += "noligne  texte                                          \n";
-	str += "======= ================================================\n";
-	
-	if(head != NULL){ // si liste non vide
-	    sem_wait(&(head->sem));
-	}
-	else{
-	    sem_post(&semConsole);
-	    sem_post(&semQ);
-	    sem_post(&semH);
-	    sem_wait(&semNBThreadAMLSO);
-		nbThreadAMLSO--;
-	    sem_post(&semNBThreadAMLSO);
-	    return;
-	}
+    char client_fifo[100];
+    int client_fifo_fd;
+    struct Info_FIFO_Transactions data;
+    int start, end;
+    char str[400];
+    char temp[100];
 
-	struct noeud * ptr = head;	//premier element
-	
-	sem_post(&semQ);
-	sem_post(&semH);
+    data = param->data;
+    start =param->start;
+    end = param->end;
+    free(param);
+
+    sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
+
+    client_fifo_fd = open(client_fifo, O_WRONLY);
+
+    sem_wait(&semNBThreadAMLSO);
+    nbThreadAMLSO++;
+    sem_post(&semNBThreadAMLSO);
+
+    sem_wait(&semH);
+    sem_wait(&semQ);
+
+    sem_wait(&semConsole);
+
+    //Affichage des entêtes de colonnes
+    strcpy(data.transaction, "noligne  texte                                          \n");
+
+    strcpy(temp, "======= ========================================\n");
+    strcat(data.transaction, temp);
+
+    if(head != NULL){ // si liste non vide
+        sem_wait(&(head->sem));
+    }
+    else{
+
+        sem_post(&semConsole);
+        sem_post(&semQ);
+        sem_post(&semH);
+        sem_wait(&semNBThreadAMLSO);
+        nbThreadAMLSO--;
+        sem_post(&semNBThreadAMLSO);
+    }
+
+    struct noeud * ptr = head;	//premier element
 
 
-	while (ptr!=NULL){
+    sem_post(&semQ);
+    sem_post(&semH);
 
-		//L'item a un numéro séquentiel dans l'interval défini
-		if ((ptr->ligne.noligne>=start)&&(ptr->ligne.noligne<=end)){
-			str += "%d \t %s\n",
-				ptr->ligne.noligne,
-				ptr->ligne.ptrligne;
-			}
-		if (ptr->ligne.noligne>end){
-			//L'ensemble des items potentiels sont maintenant passés
-			//Déplacement immédiatement à la FIN de la liste
-			sem_post(&(ptr->sem));
-			ptr=NULL;
-			}
-		else{
-			if(ptr->suivant != NULL){
-			    sem_wait(&(ptr->suivant->sem));
-			    struct noeud* optr;
-			    optr = ptr;
-			    ptr = ptr->suivant;
-			    sem_post(&(optr->sem));
-			}
-			else{
-				sem_post(&(ptr->sem));
-			    ptr = NULL;
-			}			  
-		}
+    while (ptr!=NULL){
+        //L'item a un numéro séquentiel dans l'interval défini
+        if ((ptr->ligne.noligne>=start)&&(ptr->ligne.noligne<=end)){
+            sprintf(temp, "%d \t", ptr->ligne.noligne);
+            strcpy(data.transaction, temp);
+            write(client_fifo_fd, &data, sizeof(data));
 
-	}
-	
-	//Affichage des pieds de colonnes
-	str +="======= ================================================\n\n";
-	
-	sem_post(&semConsole);
-	sem_wait(&semNBThreadAMLSO);
-	    nbThreadAMLSO--;
-	sem_post(&semNBThreadAMLSO);
+            sprintf(temp, "%s\n", ptr->ligne.ptrligne);
+            strcpy(data.transaction, temp);
+            write(client_fifo_fd, &data, sizeof(data));
+//            sprintf(temp, "%d \t %s\n",
+//                    ptr->ligne.noligne,
+//                    ptr->ligne.ptrligne);
+//            strcpy(data.transaction, temp);
+//            write(client_fifo_fd, &data, sizeof(data));
+        }
+        if (ptr->ligne.noligne>end){
+            //L'ensemble des items potentiels sont maintenant passés
+            //Déplacement immédiatement à la FIN de la liste
+            sem_post(&(ptr->sem));
+            ptr=NULL;
+        }
+        else{
+            if(ptr->suivant != NULL){
+                sem_wait(&(ptr->suivant->sem));
+                struct noeud* optr;
+                optr = ptr;
+                ptr = ptr->suivant;
+                sem_post(&(optr->sem));
+            }
+            else{
+                sem_post(&(ptr->sem));
+                ptr = NULL;
+            }
+        }
 
-	return str;
+    }
+
+    //Affichage des pieds de colonnes
+    strcpy(temp, "======= ================================================\n\n");
+    strcat(data.transaction, temp);
+    write(client_fifo_fd, &data, sizeof(data));
+
+    close(client_fifo_fd);
+    sem_post(&semConsole);
+    sem_wait(&semNBThreadAMLSO);
+    nbThreadAMLSO--;
+    sem_post(&semNBThreadAMLSO);
 }
 

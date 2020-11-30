@@ -11,7 +11,7 @@
 
 struct Info_FIFO_Transactions{
     int pid_client;
-    char transaction[200];
+    char transaction[400];
 };
 
 struct infoligne{						
@@ -39,7 +39,8 @@ struct infoREMOVE{
 	int noligne;
 	};
 
-struct infoLIST{						
+struct infoLIST{
+    struct Info_FIFO_Transactions data;
 	int start;
 	int end;
 	};
@@ -65,7 +66,7 @@ void addItemNONCONCURRENT(const int nl, const char* tl);
 void addItem(struct infoADD* param);
 void removeItem(struct infoREMOVE* param);
 void modifyItem(struct infoMODIFY* param);
-char* listItems(struct infoLIST* param);
+void listItems(struct infoLIST* param);
 void saveItems(struct infoSAVE* param);
 void executeFile(const char* sourcefname);
 
