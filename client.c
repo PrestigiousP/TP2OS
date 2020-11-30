@@ -14,6 +14,12 @@ int main(){
 	char client_fifo[256];
 	int read_res;
 	char str[400];
+	int sorti = 1;
+	int ligneEntree = 1;
+	int ligneSorti = 1;
+	char quit[] = "quit";
+	data.nbLignes = 0;
+
 	
 	WINDOW *transmission;
     WINDOW *reception;
@@ -28,7 +34,7 @@ int main(){
     }
 
     //Tube ouvre client_fifo pour éventuellement lire ce que le serveur va avoir écrit dedans
-    client_fifo_fd = open(client_fifo, O_RDWR);
+    client_fifo_fd = open(client_fifo, O_RDONLY | O_NONBLOCK);
     if(client_fifo_fd == -1){
         fprintf(stderr, "Client fifo failure\n");
         exit(EXIT_FAILURE);
@@ -44,8 +50,10 @@ int main(){
     initscr();
     
 	//-------------------------------------Création des deux fenêtres avec bordures
-    transmission = newwin(20, 50, 0, 0);
-    reception = newwin(20, 50, 0, 51);
+    transmission = newwin(20, 80, 0, 0);
+    reception = newwin(20, 80, 0, 81);
+    scrollok(transmission, true);
+    scrollok(reception, true);
 	box(transmission, '|', '-');
     box(reception, '|', '-');
     mvwprintw(transmission, 0, 10, "%s", "TRANSMISSION");
@@ -55,37 +63,48 @@ int main(){
 	
 		//Il va falloir lire client_fifo en passant par notre client_fifo_fd
 		//Affiché le contenu du client_fifo
+
     do {
 
         //--------------------------------------------------INPUT envoyé au serveur
         //Input de l'utilisateur
-        mvwgetstr(transmission, 2, 2, buffer);
+        mvwgetstr(transmission, ligneEntree, 2, buffer);
+        if(strcmp(buffer, quit) != 0){
+            ligneEntree++;
+            //Le contenu du buffer dans ma transaction, ensuite j'envoie ma structure. La structure permettra au serveur de savoir quel client et quelle transaction.
+            sprintf(data.transaction, "%s", buffer);
+            res = write(server_fifo_fd, &data, sizeof(data));
 
-        //Le contenu du buffer dans ma transaction, ensuite j'envoie ma structure. La structure permettra au serveur de savoir quel client et quelle transaction.
-        sprintf(data.transaction, "%s", buffer);
-        res = write(server_fifo_fd, &data, sizeof(data));
+            sleep(2);
 
-        sleep(2);
+            wrefresh(transmission);
 
-        mvwprintw(transmission, 3, 2, "un test");
-        wrefresh(transmission);
+            char c = data.transaction[0];
+            char l = 76;//"L"
 
-        char c = data.transaction[0];
-        char l = 76;//"L"
+            wrefresh(transmission);
 
-        mvwprintw(transmission, 3, 2, "on a passé ici");
-        wrefresh(transmission);
-        read_res = read(client_fifo_fd, &data, sizeof(data));
-        if (read_res > 0) {
-            mvwprintw(reception, 1, 2, "%s", data.transaction);
+            read_res = read(client_fifo_fd, &data, sizeof(data));
+            if (read_res > 0) {
+                if(ligneSorti + data.nbLignes > 20)
+                    ligneSorti = 20 - 1;
+                mvwprintw(reception, ligneSorti, 2, "%s", data.transaction);
+                ligneSorti += data.nbLignes;
+                wrefresh(reception);
+            }
+
+
+
+            //Refresh des écrans (Tant qu'il n'y a pas de refresh, rien ne s'affiche)
             wrefresh(reception);
+            wrefresh(transmission);
+        }
+        else{
+            sorti = 0;
         }
 
 
-        //Refresh des écrans (Tant qu'il n'y a pas de refresh, rien ne s'affiche)
-        wrefresh(reception);
-        wrefresh(transmission);
-    } while (read_res > 0);
+    } while (sorti == 1);
 	
 	//--------------------------------------------------
     

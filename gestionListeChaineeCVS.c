@@ -288,7 +288,8 @@ void  addItem(struct infoADD* param ){
 //# Retire un item de la liste chaînée
 //# ENTREE: nl: numéro de ligne 
 void removeItem(struct infoREMOVE* param){
-	
+
+    printf("allo hihi");
 	int noline;
 	
 	noline = param->noligne;
@@ -459,6 +460,7 @@ void listItems(struct infoLIST* param){
     char temp[100];
 
     data = param->data;
+    data.nbLignes = 0;
     start =param->start;
     end = param->end;
     free(param);
@@ -478,8 +480,9 @@ void listItems(struct infoLIST* param){
 
     //Affichage des entêtes de colonnes
     strcpy(data.transaction, "noligne  texte                                          \n");
-
+    data.nbLignes++;
     strcpy(temp, "======= ========================================\n");
+    data.nbLignes++;
     strcat(data.transaction, temp);
 
     if(head != NULL){ // si liste non vide
@@ -504,13 +507,14 @@ void listItems(struct infoLIST* param){
     while (ptr!=NULL){
         //L'item a un numéro séquentiel dans l'interval défini
         if ((ptr->ligne.noligne>=start)&&(ptr->ligne.noligne<=end)){
-            sprintf(temp, "%d \t", ptr->ligne.noligne);
-            strcpy(data.transaction, temp);
-            write(client_fifo_fd, &data, sizeof(data));
+            sprintf(temp, "%d ", ptr->ligne.noligne);
+            strcat(data.transaction, temp);
+            //write(client_fifo_fd, &data, sizeof(data));
 
-            sprintf(temp, "%s\n", ptr->ligne.ptrligne);
-            strcpy(data.transaction, temp);
-            write(client_fifo_fd, &data, sizeof(data));
+            sprintf(temp, "%s  \n ", ptr->ligne.ptrligne);
+            data.nbLignes++;
+            strcat(data.transaction, temp);
+            //write(client_fifo_fd, &data, sizeof(data));
 //            sprintf(temp, "%d \t %s\n",
 //                    ptr->ligne.noligne,
 //                    ptr->ligne.ptrligne);
@@ -540,7 +544,8 @@ void listItems(struct infoLIST* param){
     }
 
     //Affichage des pieds de colonnes
-    strcpy(temp, "======= ================================================\n\n");
+    strcpy(temp, "======= ================================================\n");
+    data.nbLignes++;
     strcat(data.transaction, temp);
     write(client_fifo_fd, &data, sizeof(data));
 

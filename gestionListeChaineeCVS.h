@@ -12,6 +12,7 @@
 struct Info_FIFO_Transactions{
     int pid_client;
     char transaction[400];
+    int nbLignes;
 };
 
 struct infoligne{						

@@ -235,7 +235,7 @@ void readTrans(int nomFichier){
                     //Appel de la fonction associée
                     //printf("\nDANS READTRANS nl = %d tl = %s ", noligne, tligne);
                     pthread_create(&tid[nbThread++], NULL, (void *)addItem, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'E':
@@ -248,7 +248,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)removeItem, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'M':
@@ -263,7 +263,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)modifyItem, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'L':
@@ -290,7 +290,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)saveItems, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'O':
@@ -303,7 +303,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)loadFich, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
                 case 'X':
@@ -316,7 +316,7 @@ void readTrans(int nomFichier){
 
                     //Appel de la fonction associee
                     pthread_create(&tid[nbThread++], NULL, (void *)executeFile, ptr);
-                    write(client_fifo_fd, &data, sizeof(data));
+                    //write(client_fifo_fd, &data, sizeof(data));
                     break;
                 }
             }
