@@ -13,6 +13,7 @@ struct Info_FIFO_Transactions{
     int pid_client;
     char transaction[400];
     int nbLignes;
+    int client_sockfd;
 };
 
 struct infoligne{						
@@ -42,7 +43,8 @@ struct infoREMOVE{
 
 struct infoLIST{
     struct Info_FIFO_Transactions data;
-	int start;
+    int client_sockfd;
+    int start;
 	int end;
 	};
 	

@@ -192,7 +192,7 @@ void executeFile(const char* sourcefname){
 //#
 
 //nomFichier = filedes du fifo de transactions
-void readTrans(int nomFichier){
+void readTrans(int client_sockfd){
 
             //	FILE *f;
         //	char buffer[100];
@@ -204,14 +204,15 @@ void readTrans(int nomFichier){
         int read_res;
         char client_fifo[100];
         char str[400];
+        //char buffer[256];
 
-        sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
+        //sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
 
-        client_fifo_fd = open(client_fifo, O_WRONLY);
+        //client_fifo_fd = open(client_fifo, O_WRONLY);
 
         do {
 
-            read_res = read(nomFichier, &data, sizeof(data));
+            read_res = read(client_sockfd, &data, sizeof(data));
         if (read_res > 0) {
 
             //printf("valeur de %s", data.transaction);
@@ -273,6 +274,7 @@ void readTrans(int nomFichier){
                     int nend = atoi(strtok_r(NULL, " ", &sp));
 
                     struct infoLIST *ptr = (struct infoLIST*) malloc(sizeof(struct infoLIST));
+                    ptr->client_sockfd = client_sockfd;
                     ptr->data = data;
                     ptr->start = nstart;
                     ptr->end = nend;

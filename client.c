@@ -5,50 +5,55 @@
 #include <ncurses.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdio.h>
+
 
 int main(){
-    int server_fifo_fd, client_fifo_fd;
+    //int server_fifo_fd, client_fifo_fd;
+    int server_sockfd, client_sockfd;
+    int sockfd;
     int res;
-    char buffer[100];
+    char buffer[1000];
     struct Info_FIFO_Transactions data;
+    struct sockaddr_in address;
 	char client_fifo[256];
 	int read_res;
 	char str[400];
 	int sorti = 1;
 	int ligneEntree = 1;
+	int result;
+	int len;
 	int ligneSorti = 1;
 	char quit[] = "quit";
 	data.nbLignes = 0;
 
-	
+
 	WINDOW *transmission;
     WINDOW *reception;
-	
-	//--------------------------------------Section FIFO/Tubes
-	//Création FIFO client
-    data.pid_client = getpid();
-	sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);
-	if (mkfifo(client_fifo, 0777) == -1) {
-        fprintf(stderr, "Sorry, can't make %s\n", client_fifo);
-        exit(EXIT_FAILURE);
+
+    // create socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = inet_addr("127.0.0.1");
+    address.sin_port = 6734;
+    len = sizeof(address);
+
+    result =  connect(sockfd, (struct sockaddr *)&address, len);
+    if(result == -1){
+        perror("erreur de connexion");
+        exit(1);
     }
 
-    //Tube ouvre client_fifo pour éventuellement lire ce que le serveur va avoir écrit dedans
-    client_fifo_fd = open(client_fifo, O_RDONLY | O_NONBLOCK);
-    if(client_fifo_fd == -1){
-        fprintf(stderr, "Client fifo failure\n");
-        exit(EXIT_FAILURE);
-    }
-	
-	//Tube ouvre FIFO_TRANSACTIONS pour éventuellement écrire dedans
-	server_fifo_fd = open(FIFO_TRANSACTIONS, O_WRONLY);
-	if(server_fifo_fd == -1){
-        fprintf(stderr, "Server fifo failure\n");
-        exit(EXIT_FAILURE);
-    }
-    
     initscr();
-    
+
 	//-------------------------------------Création des deux fenêtres avec bordures
     transmission = newwin(20, 80, 0, 0);
     reception = newwin(20, 80, 0, 81);
@@ -60,7 +65,7 @@ int main(){
     mvwprintw(reception, 0, 10, "%s", "RECEPTION");
 
 	//--------------------------------------------------Réception de l'info du serveur
-	
+
 		//Il va falloir lire client_fifo en passant par notre client_fifo_fd
 		//Affiché le contenu du client_fifo
 
@@ -73,9 +78,10 @@ int main(){
             ligneEntree++;
             //Le contenu du buffer dans ma transaction, ensuite j'envoie ma structure. La structure permettra au serveur de savoir quel client et quelle transaction.
             sprintf(data.transaction, "%s", buffer);
-            res = write(server_fifo_fd, &data, sizeof(data));
+            res = write(sockfd, &data, sizeof(data));
 
-            sleep(2);
+
+            sleep(1);
 
             wrefresh(transmission);
 
@@ -84,13 +90,19 @@ int main(){
 
             wrefresh(transmission);
 
-            read_res = read(client_fifo_fd, &data, sizeof(data));
+            read_res = read(sockfd, &data, sizeof(data));
             if (read_res > 0) {
                 if(ligneSorti + data.nbLignes > 20)
                     ligneSorti = 20 - 1;
                 mvwprintw(reception, ligneSorti, 2, "%s", data.transaction);
                 ligneSorti += data.nbLignes;
                 wrefresh(reception);
+            }
+            else{
+                mvwprintw(reception, ligneSorti, 2, "read function failed");
+                mvwprintw(reception, ligneSorti+1, 2, data.transaction);
+                wrefresh(reception);
+
             }
 
 
@@ -105,10 +117,10 @@ int main(){
 
 
     } while (sorti == 1);
-	
+
 	//--------------------------------------------------
-    
-	
+
+
 
     sleep(1);
     refresh();
@@ -116,9 +128,9 @@ int main(){
 	endwin();
 
 	//Fermeture des tubes serveurs et clients. Destruction du fifo client
-	close(client_fifo_fd);
-	close(server_fifo_fd);
-    unlink(client_fifo);
+	close(sockfd);
+	//close(server_fifo_fd);
+    //unlink(client_fifo);
     exit(EXIT_SUCCESS);
 
 }

@@ -1,0 +1,23 @@
+Projet Fait par : Philippe Baillargeon, Julien Turcotte et Tommy Dumont
+
+Username: mi107
+Password: olkizEl8
+
+Chemin d'accès : Home > Documents > TP2 > TP2OS-main
+
+Le fichier client est le fichier exécutable et client.c le fichier du code client. 
+Le fichier gestionCVS_MAIN est le fichier exécutable du serveur et le reste du programme constitue les fichiers du code serveur. 
+
+Manuel d'utilisation:
+
+1- Ouvrir le terminal dans le dossier TP2OS-main 
+2- Entrez la commande make
+3- Entrez la commande gcc -o client client.c -lncurses
+4- Exécutez le serveur en entrant la commande ./gestionCVS_MAIN
+5- Ouvrez une nouvelle fenêtre et exécutez le client en entrant ./client
+6- Entrez des commandes comme dans le fichier texte t2.txt. 
+
+Exemples de commandes:
+- L 1-4 pour afficher les lignes 1 à 4.
+- A unExemple.deCode() pour ajouter une ligne de code.
+- E 3 pour supprimer la ligne 3.
