@@ -22,6 +22,7 @@ int main(){
     char buffer[1000];
     struct Info_FIFO_Transactions data;
     struct sockaddr_in address;
+    char *tok, *sp;
 	char client_fifo[256];
 	int read_res;
 	char str[400];
@@ -80,7 +81,6 @@ int main(){
             sprintf(data.transaction, "%s", buffer);
             res = write(sockfd, &data, sizeof(data));
 
-
             sleep(1);
 
             wrefresh(transmission);
@@ -90,22 +90,24 @@ int main(){
 
             wrefresh(transmission);
 
-            read_res = read(sockfd, &data, sizeof(data));
-            if (read_res > 0) {
-                if(ligneSorti + data.nbLignes > 20)
-                    ligneSorti = 20 - 1;
-                mvwprintw(reception, ligneSorti, 2, "%s", data.transaction);
-                ligneSorti += data.nbLignes;
-                wrefresh(reception);
+            tok = strtok_r(buffer, "  ", &sp);
+
+            if(tok[0] == 76 || tok[0] == 108){
+                read_res = read(sockfd, &data, sizeof(data));
+                mvwprintw(transmission, ligneSorti, 2, "111");
+                if (read_res > 0) {
+                    if(ligneSorti + data.nbLignes > 20)
+                        ligneSorti = 20 - 1;
+                    mvwprintw(reception, ligneSorti, 2, "%s", data.transaction);
+                    ligneSorti += data.nbLignes;
+                    wrefresh(reception);
+                }
+                else{
+                    //mvwprintw(reception, ligneSorti, 2, "read function failed");
+                    //mvwprintw(reception, ligneSorti+1, 2, data.transaction);
+                    //wrefresh(reception);
+                }
             }
-            else{
-                mvwprintw(reception, ligneSorti, 2, "read function failed");
-                mvwprintw(reception, ligneSorti+1, 2, data.transaction);
-                wrefresh(reception);
-
-            }
-
-
 
             //Refresh des écrans (Tant qu'il n'y a pas de refresh, rien ne s'affiche)
             wrefresh(reception);

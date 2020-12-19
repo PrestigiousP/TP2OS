@@ -13,6 +13,7 @@
 
 #include "gestionListeChaineeCVS.h"
 #include <sys/stat.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 
 //Pointeur de tête de liste
@@ -251,7 +252,7 @@ void  addItem(struct infoADD* param ){
         sem_post(&(ni->sem));
 
         while (tptr!=NULL){
-
+            printf("allo");
             //Est-ce le prédécesseur de l'item recherché?
             tptr->ligne.noligne++;
             //On retourne un pointeur sur l'item précédent
