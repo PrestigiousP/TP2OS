@@ -193,9 +193,6 @@ void executeFile(const char* sourcefname){
 
 //nomFichier = filedes du fifo de transactions
 void readTrans(int client_sockfd){
-
-            //	FILE *f;
-        //	char buffer[100];
         pthread_t tid[1000];
         int i, nbThread = 0;
         char *tok, *sp;
@@ -204,11 +201,7 @@ void readTrans(int client_sockfd){
         int read_res;
         char client_fifo[100];
         char str[400];
-        //char buffer[256];
 
-        //sprintf(client_fifo, CLIENT_FIFO_NAME, data.pid_client);		//Trouve le client associé
-
-        //client_fifo_fd = open(client_fifo, O_WRONLY);
 
         do {
 
@@ -325,11 +318,10 @@ void readTrans(int client_sockfd){
         }
     } while (read_res > 0);
 
-
-
-
 	for(i=0; i<nbThread;i++)
 	  pthread_join(tid[i], NULL);
+
+    pthread_detach(pthread_self());
 }
 
 

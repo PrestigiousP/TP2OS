@@ -56,6 +56,8 @@ int main(int argc, char* argv[]){
     char client_fifo[256];
     char buffer[256];
     char *tmp_char_ptr;
+    pthread_t tid[1000];
+    int nbThread = 0;
     int len;
 	
 	//Initialisation des pointeurs
@@ -96,34 +98,10 @@ int main(int argc, char* argv[]){
         else{
             //meme pas sur qui soit useful
            // read(client_sockfd, &buffer, 1);
-            readTrans(client_sockfd);
+            pthread_create(&tid[nbThread++], NULL, (void *)readTrans, client_sockfd);
+           //readTrans(client_sockfd);
         }
     }
-
-
-//	//-------------------------------------------------------CRÉATION ET OUVERTURE FIFO_TRANSACTIONS
-//	//Création du FIFO_TRANSACTIONS
-//	if(access(FIFO_TRANSACTIONS, F_OK) == -1){
-//        res = mkfifo(FIFO_TRANSACTIONS, 0777);
-//        if (res != 0) {
-//            fprintf(stderr, "Could not create fifo %s\n", FIFO_TRANSACTIONS);
-//            exit(EXIT_FAILURE);
-//        }
-//	}
-//
-//	//ouverture de fifo transaction en lecture seulement
-//	server_fifo_fd = open(FIFO_TRANSACTIONS, O_RDONLY);
-//    if(server_fifo_fd == -1){
-//        fprintf(stderr, "Server fifo failure\n");
-//        exit(EXIT_FAILURE);
-//    }
-
-    //S'apprête à ouvrir le fifo du client en écriture
-    //client_fifo_fd = open(client_fifo, O_WRONLY);
-
-
-    //readTrans(server_fifo_fd);
-
     
 	//Arrêt de l'utilisation du fifo_transactions
 	close(server_sockfd);

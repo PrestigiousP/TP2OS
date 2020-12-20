@@ -94,7 +94,6 @@ int main(){
 
             if(tok[0] == 76 || tok[0] == 108){
                 read_res = read(sockfd, &data, sizeof(data));
-                mvwprintw(transmission, ligneSorti, 2, "111");
                 if (read_res > 0) {
                     if(ligneSorti + data.nbLignes > 20)
                         ligneSorti = 20 - 1;
